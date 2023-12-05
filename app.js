@@ -11,10 +11,12 @@ const multer = require('multer');
 
 
 const errorController = require('./controllers/error');
+const shopController = require('./controllers/shop');
+const isAuth = require('./middleware/is-auth');
 const User = require('./models/user');
 
 const MONGODB_URI =
-    'mongodb+srv://shreyang:P7f44opVeO3aUcsg@cluster0.skypcz3.mongodb.net/shop';
+    '';
 
 const app = express();
 const store = new MongoDBStore({
@@ -51,6 +53,8 @@ const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
+
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
     multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
@@ -65,12 +69,11 @@ app.use(
         store: store
     })
 );
-app.use(csrfProtection);
+
 app.use(flash());
 
 app.use((req, res, next) => {
     res.locals.isAuthenticated = req.session.isLoggedIn;
-    res.locals.csrfToken = req.csrfToken();
     next();
 });
 
@@ -90,6 +93,13 @@ app.use((req, res, next) => {
         .catch(err => {
             next(new Error(err));
         });
+});
+
+app.post('/create-order', isAuth, shopController.postOrder);
+app.use(csrfProtection);
+app.use((req, res, next) => {
+    res.locals.csrfToken = req.csrfToken();
+    next();
 });
 
 app.use('/admin', adminRoutes);
